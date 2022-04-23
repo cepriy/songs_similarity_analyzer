@@ -14,6 +14,8 @@ Copy the song file in the same directory where the file song_analyzer.py is loca
 Run the program through this command:
 python3 song_analyzer.py <songfile> <song samples directory(optional)> <distance computing method(optional)>
 
+Be sure to run the program in cmd mode as amdinistrator!!!
+
 Unless you provide a directory path with song samples, a default sample directory ('songs') will be used.
 Unless you provide the method name, the euclidean metrics will be used by default. Alternatively, the following
 metrics can be applied: ‘braycurtis’, ‘canberra’, ‘chebyshev’, ‘cityblock’, ‘correlation’, ‘cosine’, 
