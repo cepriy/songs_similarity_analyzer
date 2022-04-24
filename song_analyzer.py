@@ -8,17 +8,6 @@ from os.path import isfile, join
 from scipy.spatial.distance import cdist
 from os.path import exists
 
-sys.path.append("/absolute/module/path")
-
-
-reduced_array_size = 2000
-
-
-
-
-
-
-
 def analyze_song(songfile):
     start_song_analysis = time.time()
     x, sr = librosa.load(songfile,
@@ -27,20 +16,19 @@ def analyze_song(songfile):
     print("Mp3 to nmpy array took" + str(time.time() - start_song_analysis) + " seconds")
     time_stamp_2 = time.time()
     nonzero = np.count_nonzero(x)/10000000 # proportional to the duration of non-silent fragments, reduced by 10000000 times
+                                        # Nonzeros allow measuring the percussion characteristics
     print("Nonzero calculating took " + str(time.time() - time_stamp_2) + " seconds")
     time_stamp_3 = time.time()
 
-    zeros = librosa.zero_crossings(x)
+    zeros = librosa.zero_crossings(x) # Zeros measure the silence
     zeros_sum = np.sum(zeros)/1000000 #division for normalizing
     print("Zeros took" + str(time.time() - time_stamp_3) + " seconds")
     time_stamp_4 = time.time()
-    rmse = librosa.feature.rms(y=x)[0]
+    rmse = librosa.feature.rms(y=x)[0] # rmse corresponds to the energy level of an audio
     rmse_mean = np.mean(rmse)
     print("Rmse took" + str(time.time() - time_stamp_4) + " seconds")
     time_stamp_5 = time.time()
-    f0, voiced_flag, voiced_probs = librosa.pyin(x,
-                                                 fmin=librosa.note_to_hz('C2'),
-                                                 fmax=librosa.note_to_hz('C7')) #possible bottle neck
+    f0 = librosa.yin(x, fmin=librosa.note_to_hz('C2'), fmax=librosa.note_to_hz('C7')) #possible bottle neck
     mean_fundamental_frequency = np.mean(f0) / 1000
     #times = librosa.times_like(f0)
 
@@ -56,7 +44,7 @@ def analyze_song(songfile):
     time_stamp_8 = time.time()
     hop_length = 512
     y = x
-    oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
+    oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length) #Spectral flux is a measure of how quickly the power spectrum of a signal is changing
     print("Oenv took" + str(time.time() - time_stamp_8) + " seconds")
     time_stamp_9 = time.time()
     tempogram = librosa.feature.tempogram(onset_envelope=oenv, sr=sr, hop_length=hop_length)
@@ -112,7 +100,11 @@ def get_current_song_comparison_scores(sample_scores_df, current_song_features):
 
     for index, row in sample_scores_df.iterrows():
         current_score = compare_two_songs(row[2:10].values.tolist(), current_song_features, sys.argv[3])
-        song_comparison_scores = song_comparison_scores.append({'song_name': row['song_name'],'score': current_score},  ignore_index=True)
+        print("current_score")
+        print(current_score)
+        df_with_cuurent_score = pd.DataFrame({'song_name': row['song_name'], 'score': [current_score]})
+
+        song_comparison_scores = pd.concat([song_comparison_scores, df_with_cuurent_score], ignore_index=True)
 
     song_comparison_scores = song_comparison_scores.sort_values(['score'], ascending=[False])
     return song_comparison_scores
@@ -143,6 +135,7 @@ if __name__ == '__main__':
                    print("USING THE DEFAULT DATASET!!!")
                    current_song_features = analyze_song(sys.argv[1])
                    print("Current song analysis took " + str(time.time() - start_time) + " seconds")
+                   print(current_song_features)
                    time_1 = time.time()
                    sample_scores_df = pd.read_csv(song_samples_dir + '_features.csv')
                    print("Pdf reading took" + str(time.time() - time_1) + " seconds")
